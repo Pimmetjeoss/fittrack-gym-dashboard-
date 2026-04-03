@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/Pimmetjeoss/fittrack-gym-dashboard-/compare/v1.0.0...v1.1.0) (2026-04-03)
+
+
+### Features
+
+* redesign dashboard with v0 shadcn style ([23733ec](https://github.com/Pimmetjeoss/fittrack-gym-dashboard-/commit/23733ec634552ea304468831fcee32ef9a781643))
+
 # 1.0.0 (2026-04-03)
 
 
