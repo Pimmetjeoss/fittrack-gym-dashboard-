@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
 import { ChartMembers } from '@/components/gym/chart-members';
@@ -22,6 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { TitleBar } from '@/features/dashboard/TitleBar';
+import { Link } from '@/libs/i18nNavigation';
 
 export default function GymDashboardPage() {
   const [members, setMembers] = useState<any[]>([]);

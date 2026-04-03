@@ -27,8 +27,10 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TitleBar } from '@/features/dashboard/TitleBar';
+import { useRouter } from '@/libs/i18nNavigation';
 
 export default function MemberDetailPage() {
+  const router = useRouter();
   const { id } = useParams();
 
   const [member, setMember] = useState<any>(null);
@@ -148,7 +150,7 @@ export default function MemberDetailPage() {
       method: 'DELETE',
     });
     if (res.ok) {
-      window.location.href = '/dashboard/gym/members';
+      router.push('/dashboard/gym/members');
     }
   };
 

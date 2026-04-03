@@ -1,7 +1,6 @@
 'use client';
 
 import type { Icon } from '@tabler/icons-react';
-import Link from 'next/link';
 import * as React from 'react';
 
 import {
@@ -11,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { Link } from '@/libs/i18nNavigation';
 
 export function NavSecondary({
   items,

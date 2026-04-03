@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +23,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TitleBar } from '@/features/dashboard/TitleBar';
+import { Link } from '@/libs/i18nNavigation';
 
 export default function MembersPage() {
   const [members, setMembers] = useState<any[]>([]);
