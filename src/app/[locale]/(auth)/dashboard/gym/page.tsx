@@ -1,15 +1,33 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import { ChartMembers } from '@/components/gym/chart-members';
+import { SectionCards } from '@/components/gym/section-cards';
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { TitleBar } from '@/features/dashboard/TitleBar';
 
 export default function GymDashboardPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadMembers = useCallback(() => {
     fetch('/api/gym/members')
       .then(res => res.json())
       .then((data) => {
@@ -19,7 +37,48 @@ export default function GymDashboardPage() {
       .catch(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    loadMembers();
+  }, [loadMembers]);
+
   const activeMembers = members.filter(m => m.isActive);
+
+  // Count training plans across all members
+  const totalPlans = members.reduce(
+    (acc, m) => acc + (m.trainingPlans?.filter((p: { isActive: boolean }) => p.isActive)?.length ?? 0),
+    0,
+  );
+
+  // Count recent weight entries (last 7 days)
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const recentWeightEntries = members.reduce(
+    (acc, m) =>
+      acc
+      + (m.weightEntries?.filter(
+        (e: { date: string }) => new Date(e.date) >= oneWeekAgo,
+      )?.length ?? 0),
+    0,
+  );
+
+  const stats = {
+    totalMembers: members.length,
+    activeMembers: activeMembers.length,
+    totalPlans,
+    recentWeightEntries,
+  };
+
+  if (loading) {
+    return (
+      <>
+        <TitleBar
+          title="Gym Dashboard"
+          description="Overview of your gym members and activity"
+        />
+        <p className="text-muted-foreground">Loading...</p>
+      </>
+    );
+  }
 
   return (
     <>
@@ -28,82 +87,78 @@ export default function GymDashboardPage() {
         description="Overview of your gym members and activity"
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-md bg-card p-5">
-          <div className="text-sm text-muted-foreground">Total Members</div>
-          <div className="text-3xl font-bold">
-            {loading ? '...' : members.length}
-          </div>
-        </div>
-        <div className="rounded-md bg-card p-5">
-          <div className="text-sm text-muted-foreground">Active Members</div>
-          <div className="text-3xl font-bold">
-            {loading ? '...' : activeMembers.length}
-          </div>
-        </div>
-        <div className="rounded-md bg-card p-5">
-          <div className="text-sm text-muted-foreground">Inactive Members</div>
-          <div className="text-3xl font-bold">
-            {loading ? '...' : members.length - activeMembers.length}
-          </div>
-        </div>
-      </div>
+      <div className="flex flex-col gap-4">
+        <SectionCards stats={stats} />
 
-      <div className="mt-6 rounded-md bg-card p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="text-lg font-semibold">Recent Members</div>
-          <Link
-            href="/dashboard/gym/members"
-            className="text-sm text-blue-500 hover:text-blue-600"
-          >
-            View all →
-          </Link>
-        </div>
+        <ChartMembers members={members} />
 
-        {loading
-          ? (
-              <p className="text-muted-foreground">Loading...</p>
-            )
-          : members.length === 0
-            ? (
-                <p className="text-muted-foreground">
-                  No members yet.
-                  {' '}
-                  <Link href="/dashboard/gym/members" className="text-blue-500">Add your first member</Link>
-                </p>
-              )
-            : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="pb-2 font-medium">Name</th>
-                      <th className="pb-2 font-medium">Email</th>
-                      <th className="pb-2 font-medium">Goal</th>
-                      <th className="pb-2 font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {members.slice(0, 5).map(member => (
-                      <tr key={member.id} className="border-b">
-                        <td className="py-2">
-                          <Link href={`/dashboard/gym/members/${member.id}`} className="text-blue-500 hover:underline">
-                            {member.firstName}
-                            {' '}
-                            {member.lastName}
-                          </Link>
-                        </td>
-                        <td className="py-2">{member.email || '-'}</td>
-                        <td className="py-2">{member.goal || '-'}</td>
-                        <td className="py-2">
-                          <span className={`rounded-full px-2 py-0.5 text-xs ${member.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                            {member.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Members</CardTitle>
+            <CardDescription>
+              {members.length > 0
+                ? `Showing last ${Math.min(5, members.length)} of ${members.length} members`
+                : 'No members yet'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {members.length === 0
+              ? (
+                  <p className="text-sm text-muted-foreground">
+                    No members yet.
+                    {' '}
+                    <Link href="/dashboard/gym/members" className="text-primary hover:underline">
+                      Add your first member
+                    </Link>
+                  </p>
+                )
+              : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Goal</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {members.slice(0, 5).map(member => (
+                        <TableRow key={member.id}>
+                          <TableCell className="font-medium">
+                            <Link
+                              href={`/dashboard/gym/members/${member.id}`}
+                              className="text-primary hover:underline"
+                            >
+                              {member.firstName}
+                              {' '}
+                              {member.lastName}
+                            </Link>
+                          </TableCell>
+                          <TableCell>{member.email || '-'}</TableCell>
+                          <TableCell>{member.goal || '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant={member.isActive ? 'default' : 'destructive'}>
+                              {member.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+            {members.length > 0 && (
+              <div className="mt-4 text-right">
+                <Link
+                  href="/dashboard/gym/members"
+                  className="text-sm text-primary hover:underline"
+                >
+                  View all members
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </>
   );

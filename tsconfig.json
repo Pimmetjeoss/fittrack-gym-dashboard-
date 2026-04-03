@@ -56,6 +56,7 @@
   "exclude": [
     "./out/**/*",
     "./node_modules/**/*",
+    "./v0-shadcn-dashboard-5m/**/*",
     "**/*.spec.ts",
     "**/*.e2e.ts"
   ],

@@ -1,18 +1,45 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TitleBar } from '@/features/dashboard/TitleBar';
 
 export default function MembersPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', goal: '', startWeight: '' });
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    goal: '',
+    startWeight: '',
+  });
   const [saving, setSaving] = useState(false);
 
-  const loadMembers = () => {
+  const loadMembers = useCallback(() => {
     fetch('/api/gym/members')
       .then(res => res.json())
       .then((data) => {
@@ -20,11 +47,11 @@ export default function MembersPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  };
+  }, []);
 
   useEffect(() => {
     loadMembers();
-  }, []);
+  }, [loadMembers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,144 +69,219 @@ export default function MembersPage() {
     setSaving(false);
   };
 
+  const activeMembers = members.filter(m => m.isActive);
+  const inactiveMembers = members.filter(m => !m.isActive);
+
+  const handleDeleteMember = async (memberId: number, memberName: string) => {
+    // eslint-disable-next-line no-alert
+    if (!window.confirm(`Are you sure you want to delete ${memberName}?`)) {
+      return;
+    }
+    const res = await fetch(`/api/gym/members/${memberId}`, {
+      method: 'DELETE',
+    });
+    if (res.ok) {
+      loadMembers();
+    }
+  };
+
+  const handleDeleteKeyDown = (e: React.KeyboardEvent, memberId: number, memberName: string) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleDeleteMember(memberId, memberName);
+    }
+  };
+
+  const renderMembersTable = (membersList: any[]) => {
+    if (loading) {
+      return <p className="py-4 text-sm text-muted-foreground">Loading...</p>;
+    }
+    if (membersList.length === 0) {
+      return (
+        <p className="py-4 text-sm text-muted-foreground">
+          No members found.
+        </p>
+      );
+    }
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Phone</TableHead>
+            <TableHead>Goal</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {membersList.map(member => (
+            <TableRow key={member.id}>
+              <TableCell className="font-medium">
+                {member.firstName}
+                {' '}
+                {member.lastName}
+              </TableCell>
+              <TableCell>{member.email || '-'}</TableCell>
+              <TableCell>{member.phone || '-'}</TableCell>
+              <TableCell>{member.goal || '-'}</TableCell>
+              <TableCell>
+                <Badge variant={member.isActive ? 'default' : 'destructive'}>
+                  {member.isActive ? 'Active' : 'Inactive'}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Link href={`/dashboard/gym/members/${member.id}`}>
+                    <Button variant="outline" size="sm">
+                      View
+                    </Button>
+                  </Link>
+                  <button
+                    type="button"
+                    className="text-sm text-red-500 hover:text-red-700"
+                    onClick={() => handleDeleteMember(member.id, `${member.firstName} ${member.lastName}`)}
+                    onKeyDown={e => handleDeleteKeyDown(e, member.id, `${member.firstName} ${member.lastName}`)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
+
   return (
     <>
       <TitleBar title="Members" description="Manage your gym members" />
 
-      <div className="mb-4">
-        <button
-          type="button"
-          onClick={() => setShowForm(!showForm)}
-          className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
-        >
-          {showForm ? 'Cancel' : '+ Add Member'}
-        </button>
-      </div>
-
-      {showForm && (
-        <form onSubmit={handleSubmit} className="mb-6 rounded-md bg-card p-5">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label htmlFor="member-firstName" className="mb-1 block text-sm font-medium">First Name *</label>
-              <input
-                id="member-firstName"
-                type="text"
-                required
-                value={form.firstName}
-                onChange={e => setForm({ ...form, firstName: e.target.value })}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label htmlFor="member-lastName" className="mb-1 block text-sm font-medium">Last Name *</label>
-              <input
-                id="member-lastName"
-                type="text"
-                required
-                value={form.lastName}
-                onChange={e => setForm({ ...form, lastName: e.target.value })}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label htmlFor="member-email" className="mb-1 block text-sm font-medium">Email</label>
-              <input
-                id="member-email"
-                type="email"
-                value={form.email}
-                onChange={e => setForm({ ...form, email: e.target.value })}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label htmlFor="member-phone" className="mb-1 block text-sm font-medium">Phone</label>
-              <input
-                id="member-phone"
-                type="text"
-                value={form.phone}
-                onChange={e => setForm({ ...form, phone: e.target.value })}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label htmlFor="member-goal" className="mb-1 block text-sm font-medium">Goal</label>
-              <input
-                id="member-goal"
-                type="text"
-                value={form.goal}
-                onChange={e => setForm({ ...form, goal: e.target.value })}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                placeholder="e.g. Weight loss, Muscle gain"
-              />
-            </div>
-            <div>
-              <label htmlFor="member-startWeight" className="mb-1 block text-sm font-medium">Start Weight (kg)</label>
-              <input
-                id="member-startWeight"
-                type="number"
-                step="0.1"
-                value={form.startWeight}
-                onChange={e => setForm({ ...form, startWeight: e.target.value })}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="mt-4 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div />
+          <Button
+            type="button"
+            onClick={() => setShowForm(!showForm)}
           >
-            {saving ? 'Saving...' : 'Save Member'}
-          </button>
-        </form>
-      )}
+            {showForm ? 'Cancel' : '+ Add Member'}
+          </Button>
+        </div>
 
-      <div className="rounded-md bg-card p-5">
-        {loading
-          ? <p className="text-muted-foreground">Loading...</p>
-          : members.length === 0
-            ? <p className="text-muted-foreground">No members yet. Click &quot;+ Add Member&quot; to get started.</p>
-            : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="pb-2 font-medium">Name</th>
-                      <th className="pb-2 font-medium">Email</th>
-                      <th className="pb-2 font-medium">Phone</th>
-                      <th className="pb-2 font-medium">Goal</th>
-                      <th className="pb-2 font-medium">Status</th>
-                      <th className="pb-2 font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {members.map(member => (
-                      <tr key={member.id} className="border-b">
-                        <td className="py-2 font-medium">
-                          {member.firstName}
-                          {' '}
-                          {member.lastName}
-                        </td>
-                        <td className="py-2">{member.email || '-'}</td>
-                        <td className="py-2">{member.phone || '-'}</td>
-                        <td className="py-2">{member.goal || '-'}</td>
-                        <td className="py-2">
-                          <span className={`rounded-full px-2 py-0.5 text-xs ${member.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                            {member.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="py-2">
-                          <Link
-                            href={`/dashboard/gym/members/${member.id}`}
-                            className="text-blue-500 hover:underline"
-                          >
-                            View
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+        {showForm && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Add New Member</CardTitle>
+              <CardDescription>Fill in the details to add a new gym member.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit}>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="member-firstName">First Name *</Label>
+                    <Input
+                      id="member-firstName"
+                      type="text"
+                      required
+                      value={form.firstName}
+                      onChange={e => setForm({ ...form, firstName: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="member-lastName">Last Name *</Label>
+                    <Input
+                      id="member-lastName"
+                      type="text"
+                      required
+                      value={form.lastName}
+                      onChange={e => setForm({ ...form, lastName: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="member-email">Email</Label>
+                    <Input
+                      id="member-email"
+                      type="email"
+                      value={form.email}
+                      onChange={e => setForm({ ...form, email: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="member-phone">Phone</Label>
+                    <Input
+                      id="member-phone"
+                      type="text"
+                      value={form.phone}
+                      onChange={e => setForm({ ...form, phone: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="member-goal">Goal</Label>
+                    <Input
+                      id="member-goal"
+                      type="text"
+                      value={form.goal}
+                      onChange={e => setForm({ ...form, goal: e.target.value })}
+                      placeholder="e.g. Weight loss, Muscle gain"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="member-startWeight">Start Weight (kg)</Label>
+                    <Input
+                      id="member-startWeight"
+                      type="number"
+                      step="0.1"
+                      value={form.startWeight}
+                      onChange={e => setForm({ ...form, startWeight: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={saving}
+                  className="mt-4"
+                >
+                  {saving ? 'Saving...' : 'Save Member'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardContent className="pt-6">
+            <Tabs defaultValue="all">
+              <TabsList>
+                <TabsTrigger value="all">
+                  All Members (
+                  {members.length}
+                  )
+                </TabsTrigger>
+                <TabsTrigger value="active">
+                  Active (
+                  {activeMembers.length}
+                  )
+                </TabsTrigger>
+                <TabsTrigger value="inactive">
+                  Inactive (
+                  {inactiveMembers.length}
+                  )
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="all">
+                {renderMembersTable(members)}
+              </TabsContent>
+              <TabsContent value="active">
+                {renderMembersTable(activeMembers)}
+              </TabsContent>
+              <TabsContent value="inactive">
+                {renderMembersTable(inactiveMembers)}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </>
   );

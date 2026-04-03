@@ -1,7 +1,8 @@
-import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 
-import { DashboardHeader } from '@/features/dashboard/DashboardHeader';
+import { AppSidebar } from '@/components/app-sidebar';
+import { SiteHeader } from '@/components/site-header';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
 export async function generateMetadata(props: { params: { locale: string } }) {
   const t = await getTranslations({
@@ -16,45 +17,16 @@ export async function generateMetadata(props: { params: { locale: string } }) {
 }
 
 export default function DashboardLayout(props: { children: React.ReactNode }) {
-  const t = useTranslations('DashboardLayout');
-
   return (
-    <>
-      <div className="shadow-md">
-        <div className="mx-auto flex max-w-screen-xl items-center justify-between px-3 py-4">
-          <DashboardHeader
-            menu={[
-              {
-                href: '/dashboard',
-                label: t('home'),
-              },
-              {
-                href: '/dashboard/gym',
-                label: 'Gym Dashboard',
-              },
-              {
-                href: '/dashboard/gym/members',
-                label: 'Members',
-              },
-              {
-                href: '/dashboard/my-profile',
-                label: 'My Profile',
-              },
-              {
-                href: '/dashboard/organization-profile',
-                label: t('settings'),
-              },
-            ]}
-          />
-        </div>
-      </div>
-
-      <div className="min-h-[calc(100vh-72px)] bg-muted">
-        <div className="mx-auto max-w-screen-xl px-3 pb-16 pt-6">
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <SiteHeader />
+        <main className="flex flex-1 flex-col gap-4 p-4">
           {props.children}
-        </div>
-      </div>
-    </>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 
