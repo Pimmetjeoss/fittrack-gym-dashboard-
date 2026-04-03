@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/Pimmetjeoss/fittrack-gym-dashboard-/compare/v1.1.0...v1.1.1) (2026-04-03)
+
+
+### Bug Fixes
+
+* sidebar styling, locale-aware links, redirect ([2ef2d2b](https://github.com/Pimmetjeoss/fittrack-gym-dashboard-/commit/2ef2d2bd420973d0394b7a374ab8bb8dccbe0b71))
+
 # [1.1.0](https://github.com/Pimmetjeoss/fittrack-gym-dashboard-/compare/v1.0.0...v1.1.0) (2026-04-03)
 
 
