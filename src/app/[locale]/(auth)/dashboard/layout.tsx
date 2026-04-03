@@ -28,16 +28,22 @@ export default function DashboardLayout(props: { children: React.ReactNode }) {
                 href: '/dashboard',
                 label: t('home'),
               },
-              // PRO: Link to the /dashboard/todos page
               {
-                href: '/dashboard/organization-profile/organization-members',
-                label: t('members'),
+                href: '/dashboard/gym',
+                label: 'Gym Dashboard',
+              },
+              {
+                href: '/dashboard/gym/members',
+                label: 'Members',
+              },
+              {
+                href: '/dashboard/my-profile',
+                label: 'My Profile',
               },
               {
                 href: '/dashboard/organization-profile',
                 label: t('settings'),
               },
-              // PRO: Link to the /dashboard/billing page
             ]}
           />
         </div>
